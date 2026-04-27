@@ -1,20 +1,46 @@
-deploy:
-  needs: build
-  runs-on: ubuntu-latest
+name: CI/CD Pipeline
 
-  steps:
-    - name: Deploy to EC2
-      uses: appleboy/ssh-action@v1.0.0
-      with:
-        host: ${{ secrets.EC2_HOST }}
-        username: ${{ secrets.EC2_USER }}
-        key: ${{ secrets.EC2_SSH_KEY }}
-        script: |
-          cd githubactions-flow || git clone https://github.com/ArsalanShafique/githubactions-flow.git
-          cd githubactions-flow
+on:
+  push:
+    branches:
+      - main
+      - backend
+      - frontend
 
-          git pull origin main
+jobs:
+  build:
+    runs-on: ubuntu-latest
 
-          npm install
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-          pm2 restart backend || pm2 start backend.js
+      - name: Show files
+        run: ls -la
+
+      - name: Run a test command
+        run: echo "Running CI pipeline..."
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+
+    
+    steps:
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            echo "Connecting to server..."
+            cd ~/ githubactions-flow|| git clone https://github.com/ArsalanShafique/githubactions-flow.git
+            cd githubactions-flow
+            git pull origin main
+
+            echo "Installing dependencies..."
+            npm install
+
+            echo "Starting application..."
+            pm2 restart backend || pm2 start backend.js
